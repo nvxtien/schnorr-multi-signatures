@@ -1,1 +1,1 @@
-# Schnorr-Signatures-
+# Schnorr multiple signatures
