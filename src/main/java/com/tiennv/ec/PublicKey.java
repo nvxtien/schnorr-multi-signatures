@@ -35,8 +35,7 @@ public class PublicKey {
      *
      * @return
      */
-    public byte[] getPubKey() {
-
-        return new byte[0];
+    public byte[] toBytes() {
+        return this.x.toByteArray();
     }
 }
