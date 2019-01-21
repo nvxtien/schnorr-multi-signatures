@@ -1,1 +1,3 @@
-Secp256k1Test.java
+.gradle/
+.idea/
+out/

@@ -21,24 +21,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
- * Base58 is a way to encode Bitcoin addresses (or arbitrary data) as alphanumeric strings.
- * <p>
- * Note that this is not the same base58 as used by Flickr, which you may find referenced around the Internet.
- * <p>
- * You may want to consider working with {@link PrefixedChecksummedBytes} instead, which
- * adds support for testing the prefix and suffix bytes commonly found in addresses.
- * <p>
- * Satoshi explains: why base-58 instead of standard base-64 encoding?
- * <ul>
- * <li>Don't want 0OIl characters that look the same in some fonts and
- *     could be used to create visually identical looking account numbers.</li>
- * <li>A string with non-alphanumeric characters is not as easily accepted as an account number.</li>
- * <li>E-mail usually won't line-break if there's no punctuation to break at.</li>
- * <li>Doubleclicking selects the whole number as one word if it's all alphanumeric.</li>
- * </ul>
- * <p>
- * However, note that the encoding/decoding runs in O(n&sup2;) time, so it is not useful for large data.
- * <p>
  * The basic idea of the encoding is to treat the data bytes as a large number represented using
  * base-256 digits, convert the number to be represented using base-58 digits, preserve the exact
  * number of leading zeros (which are otherwise lost during the mathematical operations on the
@@ -117,9 +99,9 @@ public class Base58 {
      *
      * @param input the base58-encoded string to decode
      * @return the decoded data bytes
-     * @throws AddressFormatException if the given string is not a valid base58 string
+     * @throws Exception if the given string is not a valid base58 string
      */
-    /*public static byte[] decode(String input) throws AddressFormatException {
+    public static byte[] decode(String input) throws Exception {
         if (input.length() == 0) {
             return new byte[0];
         }
@@ -129,7 +111,8 @@ public class Base58 {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
             if (digit < 0) {
-                throw new AddressFormatException.InvalidCharacter(c, i);
+//                throw new AddressFormatException.InvalidCharacter(c, i);
+                throw new Exception("Invalid base58 string");
             }
             input58[i] = (byte) digit;
         }
@@ -153,7 +136,7 @@ public class Base58 {
         }
         // Return decoded data (including original number of leading zeros).
         return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
-    }*/
+    }
     
     /*public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
         return new BigInteger(1, decode(input));

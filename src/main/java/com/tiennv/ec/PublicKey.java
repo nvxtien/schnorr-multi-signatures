@@ -15,16 +15,41 @@ public class PublicKey {
     public PublicKey(Point q) {
         this.x = q.getAffineX();
         this.y = q.getAffineY();
-        //        this.key = "04".concat(q.getAffineX().toString(16).concat(q.getAffineY().toString(16)));
-//        this.q = q;
+        this.q = q;
+    }
+
+    public String getPublicKey() {
+
+//        BigInteger prefix1 = new BigInteger("02", 16);
+
+        BigInteger prefix = new BigInteger("02", 16).add(this.y.and(BigInteger.ONE));
+
+        BigInteger xx = new BigInteger(this.x.toString(16), 16);
+        System.out.println("xx " + xx);
+
+        byte[] pub = MyUtil.concat(new byte[]{prefix.byteValue()}, this.x.toByteArray());
+
+//        System.out.println(prefix);
+//        byte[] prefix = {prefix};
+
+//        System.out.println(new byte[]{prefix.byteValue()});
+//
+//        System.out.println(new BigInteger(new byte[]{prefix.byteValue()}));
+//
+        System.out.println(this.x.toString(16));
+        return new BigInteger(pub).toString(16);
     }
 
     public Point getPoint() {
         return this.q;
     }
 
-    public String getEncodedValue() {
-        return this.key;
+    public String getAffine() {
+        return this.q.toString();
+    }
+
+    public BigInteger getAffineX() {
+        return this.q.getAffineX();
     }
 
     /**
@@ -37,5 +62,9 @@ public class PublicKey {
      */
     public byte[] toBytes() {
         return this.x.toByteArray();
+    }
+
+    public String toBase58() {
+        return Base58.encode(this.x.toByteArray());
     }
 }

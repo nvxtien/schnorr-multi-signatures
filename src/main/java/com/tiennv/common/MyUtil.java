@@ -1,5 +1,7 @@
 package com.tiennv.common;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -52,5 +54,16 @@ public final class MyUtil {
         SecureRandom random = new SecureRandom();
         BigInteger k = new BigInteger(numBits, random);
         return k;
+    }
+
+    public static byte[] concat(final byte[] a, final byte[] b) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            outputStream.write(a);
+            outputStream.write(b);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return outputStream.toByteArray();
     }
 }
