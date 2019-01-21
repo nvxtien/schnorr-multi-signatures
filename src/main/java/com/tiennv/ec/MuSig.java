@@ -1,8 +1,5 @@
 package com.tiennv.ec;
 
-import sun.nio.cs.ext.DoubleByte;
-import sun.text.normalizer.UTF16;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -36,6 +33,8 @@ public class MuSig {
     private BigInteger s;
     private List<BigInteger> sigs = new ArrayList<>();
 
+    // the multiset3 of all their public keys
+    // {Xn = g^xn}
     private byte[] multisetL;
 
     private Point aggR;
@@ -48,12 +47,18 @@ public class MuSig {
         System.out.println("Public key: " + this.cosigners);
     }
 
-    private byte[] aggH(final byte[] L, final Point pub) {
+    /**
+     * aggregatedKeyHash to compute the aggregated key
+     * @param L
+     * @param pub
+     * @return
+     */
+    private byte[] aggregatedKeyHash(final byte[] L, final Point pub) {
         return hash(concat(L, pub.toString().getBytes()));
     }
 
     private Point computeXa(final byte[] L, final Point pub) {
-        byte[] a = aggH(L, pub);
+        byte[] a = aggregatedKeyHash(L, pub);
 //        System.out.println("compute a: " + new BigInteger(a));
         BigInteger intA = toUnsignedBigInteger(a);
 //        this.ai = intA.toString().getBytes();
@@ -70,19 +75,30 @@ public class MuSig {
         return intA;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public Point computeAggPubKeys() {
         byte[] L = multisetOfPublicKeys(cosigners);
         Optional<Point> optPubKeys = cosigners.stream().map(pub -> computeXa(L, pub)).reduce((x, y) -> x.add(y));
         Point aggregatedPubKeys = optPubKeys.get();
         this.aggregatedPubKeys = aggregatedPubKeys;
 
-        byte[] a = aggH(L, this.privateKey.getPublicKey().getPoint());
+        byte[] a = aggregatedKeyHash(L, this.privateKey.getPublicKey().getPoint());
         this.ai = a;
 
         return aggregatedPubKeys;
     }
 
-    public byte[] sigH(byte[] input) {
+    /**
+     * Hash function commitmentHash is used in the commitment phase
+     *
+     * @param input
+     * @return
+     */
+    public byte[] commitmentHash(byte[] input) {
         return  hash(input);
     }
 
@@ -178,7 +194,7 @@ public class MuSig {
 
         byte[] XR = concat(this.aggregatedPubKeys.toString().getBytes(), this.aggR.toString().getBytes());
         byte[] XRm = concat(XR, m);
-        byte[] c = sigH(XRm);
+        byte[] c = commitmentHash(XRm);
         BigInteger intC = toUnsignedBigInteger(c);
         System.out.println("signing with c: " + intC);
 
@@ -228,13 +244,13 @@ public class MuSig {
              */
             byte[] XR = concat(aggregatedPubKeys.toString().getBytes(), this.aggR.toString().getBytes());
             byte[] XRm = concat(XR, m);
-            byte[] c = sigH(XRm);
+            byte[] c = commitmentHash(XRm);
 
             BigInteger intC = toUnsignedBigInteger(c);
             System.out.println("receiveSig c: " + intC);
 
 
-            byte[] a = aggH(this.multisetL, sign.getPublicKey());
+            byte[] a = aggregatedKeyHash(this.multisetL, sign.getPublicKey());
             BigInteger intA = toUnsignedBigInteger(a);
 
             System.out.println("receiveSig a: " + intA);
@@ -269,7 +285,7 @@ public class MuSig {
         // R + [c]X~ = [s]P
         byte[] XR = concat(this.aggregatedPubKeys.toString().getBytes(), this.aggR.toString().getBytes());
         byte[] XRm = concat(XR, m);
-        byte[] c = sigH(XRm);
+        byte[] c = commitmentHash(XRm);
 
         BigInteger intC = toUnsignedBigInteger(c);
         System.out.println("verify c: " + intC);
