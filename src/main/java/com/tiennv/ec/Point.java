@@ -109,9 +109,9 @@ public final class Point {
 
     public String toString(int radix) {
         if (this.isInfinity()) {
-            return "[null, null]";
+            return "(null, null)";
         }
-        return "[" + affineX.toString(radix) + "," + affineY.toString(radix) + "]";
+        return "(" + affineX.toString(radix) + "," + affineY.toString(radix) + ")";
     }
 
     @Override

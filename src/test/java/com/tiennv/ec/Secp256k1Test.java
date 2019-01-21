@@ -103,6 +103,7 @@ public class Secp256k1Test {
 
         java.security.PrivateKey privKeyU = kpU.getPrivate();
         PublicKey pubKeyU = kpU.getPublic();
+        System.out.println("Private key 1: " + privKeyU.getEncoded());
         System.out.println("Private key: " + privKeyU.getEncoded().length);
         System.out.println("User U: " + pubKeyU.toString());
 
