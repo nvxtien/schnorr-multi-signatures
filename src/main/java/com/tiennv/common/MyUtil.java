@@ -1,4 +1,4 @@
-package com.tiennv.ec;
+package com.tiennv.common;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;

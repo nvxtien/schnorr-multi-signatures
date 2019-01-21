@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.tiennv.ec;
+package com.tiennv.common;
 
 import com.google.common.io.BaseEncoding;
 
