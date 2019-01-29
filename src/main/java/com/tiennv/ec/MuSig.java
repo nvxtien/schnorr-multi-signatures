@@ -228,11 +228,8 @@ public class MuSig {
         System.out.println("this.aggR.toString(): " + this.aggR.getPublicKey());
 
         byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
-
         byte[] XRm = concat(XR, m);
-
         byte[] c = commitmentHash(XRm);
-
         BigInteger intC = toUnsignedBigInteger(c);
         System.out.println("signing with c: " + intC);
 
@@ -281,11 +278,9 @@ public class MuSig {
             /**
              * sP = R + caQ
              */
-            byte[] XR = concat(aggregatedPubKeys.toString().getBytes(), this.aggR.toString().getBytes());
-
+            byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
             byte[] XRm = concat(XR, m);
             byte[] c = commitmentHash(XRm);
-
             BigInteger intC = toUnsignedBigInteger(c);
             System.out.println("receiveSig c: " + intC);
 
@@ -332,7 +327,7 @@ public class MuSig {
         // (with the public key included in the hash call)
         // with respect to the “aggregated” public key
         // R + [c]X~ = [s]P
-        byte[] XR = concat(this.aggregatedPubKeys.toString().getBytes(), this.aggR.toString().getBytes());
+        byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
         byte[] XRm = concat(XR, m);
         byte[] c = commitmentHash(XRm);
 
