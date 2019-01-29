@@ -3,19 +3,19 @@ package com.tiennv.ec;
 import java.math.BigInteger;
 
 public class Signing {
-    private Point publicKey;
+    private String publicKey;
     private BigInteger s;
 
-    public Signing(Point publicKey, BigInteger s) {
+    public Signing(String publicKey, BigInteger s) {
         this.publicKey = publicKey;
         this.s = s;
     }
 
-    public Point getPublicKey() {
+    public String getPublicKey() {
         return publicKey;
     }
 
-    public void setPublicKey(Point publicKey) {
+    public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
     }
 

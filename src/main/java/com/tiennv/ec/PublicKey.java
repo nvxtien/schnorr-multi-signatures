@@ -1,5 +1,9 @@
 package com.tiennv.ec;
 
+import com.google.common.io.BaseEncoding;
+import com.tiennv.common.Base58;
+import com.tiennv.common.MyUtil;
+
 import java.math.BigInteger;
 
 /**
@@ -7,37 +11,64 @@ import java.math.BigInteger;
  *
  */
 public class PublicKey {
-    private String key;
     private Point q;
 
     private BigInteger x, y;
+    private byte[] kBytes;
+    private String pubKey;
+
+    public PublicKey(String pubKey) {
+
+        String value = pubKey.substring(2);
+//        System.out.println("value " + value);
+        this.x = new BigInteger(value, 16);
+
+        BigInteger right = this.x.modPow(BigInteger.valueOf(3), Secp256k1.p).add(BigInteger.valueOf(7)).mod(Secp256k1.p);
+
+        this.y = MyUtil.squareRoot(right, Secp256k1.p);
+
+        BigInteger prefix = new BigInteger(pubKey.substring(0,2)).and(BigInteger.ONE);
+        if (!this.y.and(BigInteger.ONE).equals(prefix)) {
+            this.y = this.y.negate().mod(Secp256k1.p);
+//            System.out.println("negate");
+        }
+
+        this.q = Point.newPoint(Secp256k1.Secp256k1, this.x, this.y);
+    }
 
     public PublicKey(Point q) {
         this.x = q.getAffineX();
         this.y = q.getAffineY();
         this.q = q;
+
+//        System.out.println("this.x.toByteArray() " + this.x.toByteArray().length);
+
+        BigInteger prefix = BigInteger.valueOf(2).add(this.y.and(BigInteger.ONE));
+
+        // a 32-byte hex number
+        String hex = String.format("%064X", this.x);
+
+        /*int n = 64 - hex.length();
+        while (n > 0) {
+            hex = "0".concat(hex);
+            System.out.println("append 0 " + n);
+            n--;
+        }*/
+
+        byte[] xCoor = BaseEncoding.base16().decode(hex);
+
+//        System.out.println("prefix.toByteArray() " + prefix.toByteArray().length);
+//        System.out.println("prefix.toByteArray() " + new BigInteger(prefix.toByteArray()));
+
+        this.kBytes = MyUtil.concat(prefix.toByteArray(), xCoor);
+        // The public key pk: a 33-byte array
+        this.pubKey = String.format("%066X", new BigInteger(this.kBytes));
+
+//        new BigInteger(this.kBytes).toString(16);
     }
 
     public String getPublicKey() {
-
-//        BigInteger prefix1 = new BigInteger("02", 16);
-
-        BigInteger prefix = new BigInteger("02", 16).add(this.y.and(BigInteger.ONE));
-
-        BigInteger xx = new BigInteger(this.x.toString(16), 16);
-        System.out.println("xx " + xx);
-
-        byte[] pub = MyUtil.concat(new byte[]{prefix.byteValue()}, this.x.toByteArray());
-
-//        System.out.println(prefix);
-//        byte[] prefix = {prefix};
-
-//        System.out.println(new byte[]{prefix.byteValue()});
-//
-//        System.out.println(new BigInteger(new byte[]{prefix.byteValue()}));
-//
-        System.out.println(this.x.toString(16));
-        return new BigInteger(pub).toString(16);
+        return this.pubKey;
     }
 
     public Point getPoint() {
@@ -60,11 +91,11 @@ public class PublicKey {
      *
      * @return
      */
-    public byte[] toBytes() {
-        return this.x.toByteArray();
+    public byte[] getBytes() {
+        return this.kBytes;
     }
 
     public String toBase58() {
-        return Base58.encode(this.x.toByteArray());
+        return Base58.encode(getBytes());
     }
 }

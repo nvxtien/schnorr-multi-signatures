@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MuSigTest {
@@ -36,19 +37,20 @@ public class MuSigTest {
         final MuSig cosigner1 = new MuSig(privateKey1);
 
         // X2,...,Xn be the public keys of other cosigners
-        List<Point> pubKeys = new ArrayList<>();
-        pubKeys.add(privateKey.getPublicKey().getPoint());
+        List<String> pubKeys = new ArrayList<>();
+        pubKeys.add(privateKey.getPublicKey().getPublicKey());
 
-        List<Point> pubKeys1 = new ArrayList<>();
-        pubKeys1.add(privateKey1.getPublicKey().getPoint());
+        List<String> pubKeys1 = new ArrayList<>();
+        pubKeys1.add(privateKey1.getPublicKey().getPublicKey());
 
         cosigner.setCosigners(pubKeys1);
         cosigner1.setCosigners(pubKeys);
 
-        Point pointX = cosigner.computeAggPubKeys();
-        Point pointX1 = cosigner1.computeAggPubKeys();
+        PublicKey pointX = cosigner.computeAggPubKeys();
+        PublicKey pointX1 = cosigner1.computeAggPubKeys();
 
-        assertTrue(pointX.equals(pointX1));
+        assertTrue(pointX.getPoint().equals(pointX1.getPoint()));
+        assertTrue(pointX.getPublicKey().equals(pointX1.getPublicKey()));
 
         // t commitment
         TCommitment tCommitment = cosigner.sendTComm();
@@ -64,10 +66,11 @@ public class MuSigTest {
         RCommitment rCommitment1 = cosigner1.sendRComm();
         cosigner.receiveRComm(rCommitment1);
 
-        Point aggR = cosigner.computeAggR();
-        Point aggR1 = cosigner1.computeAggR();
+        PublicKey aggR = cosigner.computeAggR();
+        PublicKey aggR1 = cosigner1.computeAggR();
 
-        assertTrue(aggR.equals(aggR1));
+        assertEquals(aggR.getPoint(), aggR1.getPoint());
+        assertEquals(aggR.getPublicKey(), aggR1.getPublicKey());
 
         String m = "message";
         cosigner.sign(m.getBytes());

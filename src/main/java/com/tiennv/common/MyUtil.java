@@ -66,4 +66,62 @@ public final class MyUtil {
         }
         return outputStream.toByteArray();
     }
+
+    // Utility function to do modular exponentiation.
+// It returns (x^y) % p.
+    static BigInteger power(BigInteger x, BigInteger y, BigInteger p)
+    {
+        BigInteger res = BigInteger.ONE; // Initialize result
+        x = x.mod(p); // Update x if it is more than or
+        // equal to p
+
+        while (y.compareTo(BigInteger.ZERO) > 0) {
+            // If y is odd, multiply x with result
+            if (y.and(BigInteger.ONE).equals(BigInteger.ONE)) {
+                res = res.multiply(x).mod(p);
+            }
+
+            // y must be even now
+            y = y.shiftRight(1); // y = y/2
+            x = x.multiply(x).mod(p);
+        }
+        return res;
+    }
+
+    // Returns true if square root of n under modulo p exists
+// Assumption: p is of the form 3*i + 4 where i >= 1
+    public static BigInteger squareRoot(BigInteger n, BigInteger p)
+    {
+        if (!p.mod(BigInteger.valueOf(4)).equals(BigInteger.valueOf(3))) {
+            System.out.print("Invalid Input");
+            return BigInteger.ZERO;
+        }
+
+        // Try "+(n^((p + 1)/4))"
+        n = n.mod(p);
+//        BigInteger x = power(n, (p.add(BigInteger.ONE)).divide(BigInteger.valueOf(4)), p);
+        BigInteger x = n.modPow(p.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), p);
+
+        if (x.multiply(x).mod(p).equals(n)) {
+//            System.out.println("Square root is " + x);
+//            System.out.println("Square root is " + x.signum());
+//            System.out.println("Square root is " + x.abs());
+
+            return x;
+        }
+
+        // Try "-(n ^ ((p + 1)/4))"
+        /*x = p.subtract(x);
+        if (x.multiply(x).mod(p).equals(n)) {
+            System.out.println("Square root is11 " + x);
+            System.out.println("Square root is11 " + x.signum());
+            return x;
+        }*/
+
+        // If none of the above two work, then
+        // square root doesn't exist
+        System.out.print("Square root doesn't exist ");
+        return BigInteger.ZERO;
+    }
+
 }

@@ -1,20 +1,20 @@
 package com.tiennv.ec;
 
 public class RCommitment {
-    private final Point pub;
-    private final Point pR;
+    private final String pub;
+    private final String pR;
 
 
-    public RCommitment(Point pub, Point pR) {
-        this.pub = pub;
+    public RCommitment(String publicKey, String pR) {
+        this.pub = publicKey;
         this.pR = pR;
     }
 
-    public Point getPub() {
+    public String getPub() {
         return pub;
     }
 
-    public Point getR() {
+    public String getR() {
         return pR;
     }
 }
