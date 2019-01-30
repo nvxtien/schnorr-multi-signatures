@@ -73,8 +73,8 @@ public class MuSigTest {
         assertEquals(aggR.getPublicKey(), aggR1.getPublicKey());
 
         String m = "message";
-        cosigner.sign(m.getBytes());
-        cosigner1.sign(m.getBytes());
+        cosigner.sign(m);
+        cosigner1.sign(m);
 
         Signing signing = cosigner.sendSig();
         cosigner1.receiveSig(signing);

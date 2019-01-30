@@ -25,7 +25,7 @@ public class NAF extends EFp implements Computation {
     public Point scalarMultiply(BigInteger k, Point r) {
         List<BigInteger> naf = MyUtil.NAF(k);
         int size = naf.size();
-        System.out.println(size);
+//        System.out.println(size);
         if (size == 0) {
             return Point.POINT_INFINITY;
         }

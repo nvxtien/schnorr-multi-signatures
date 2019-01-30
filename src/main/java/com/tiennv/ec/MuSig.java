@@ -23,6 +23,7 @@ public class MuSig {
 
     private RCommitment rCommitment;
     private PrivateKey privateKey;
+    private PublicKey publicKey;
 
     private List<TCommitment> tCommitments = new ArrayList<>();
     private List<RCommitment> rCommitments = new ArrayList<>();
@@ -47,6 +48,7 @@ public class MuSig {
 
     public MuSig(final PrivateKey privateKey) {
         this.privateKey = privateKey;
+        this.publicKey = privateKey.getPublicKey();
         this.cosigners.add(privateKey.getPublicKey().getPublicKey());
         System.out.println("cosigner public key: " + this.cosigners);
     }
@@ -63,23 +65,17 @@ public class MuSig {
 
     private Point computeXa(final byte[] L, final String pub) {
         byte[] a = aggregatedKeyHash(L, pub);
-//        System.out.println("compute a: " + new BigInteger(a));
-        BigInteger intA = toUnsignedBigInteger(a);
-//        this.ai = intA.toString().getBytes();
-        System.out.println("compute this.ai: " + intA);
+//        BigInteger intA = reduce(a);
 
+        BigInteger intA = new BigInteger(a).mod(Secp256k1.n);
         PublicKey publicKey = new PublicKey(pub);
         Point point = publicKey.getPoint();
 
         return point.scalarMultiply(intA);
     }
 
-    private BigInteger toUnsignedBigInteger(byte[] a) {
-        BigInteger intA = new BigInteger(a);
-        if (intA.signum() == -1) {
-            intA = intA.negate();
-        }
-        return intA;
+    private BigInteger reduce(byte[] a) {
+        return new BigInteger(a).mod(Secp256k1.n);
     }
 
     /**
@@ -120,7 +116,6 @@ public class MuSig {
 
     private byte[] multisetOfPublicKeys(List<String> pubKeys) {
         this.multisetL = pubKeys.stream().map(x -> BaseEncoding.base16().decode(x)).reduce((x, y) -> MyUtil.concat(x, y)).get();
-        System.out.println("size of multiset " + this.multisetL.length);
         return multisetL;
     }
 
@@ -217,42 +212,38 @@ public class MuSig {
 //        this.aggregatedPubKeys = computeAggPubKeys(cosigners);
     }
 
-    public BigInteger sign(final byte[] m) {
+    public BigInteger sign(final String msg) {
 //        Optional<Point> optR = this.rCommitments.stream().map(RCommitment::getR).reduce((x, y) -> x.add(y));
 //        Point aggR = optR.get();
 
-        String msg = new String(m);
-        System.out.println("signing with m: " + msg);
+        this.m = BaseEncoding.base16().decode(msg);
+        System.out.println("signing with m: " + new BigInteger(this.m));
+        System.out.println("signing with m: " + this.m.length);
 
-        System.out.println("this.aggregatedPubKeys.toString(): " + this.aggregatedPubKeys.getPublicKey());
-        System.out.println("this.aggR.toString(): " + this.aggR.getPublicKey());
-
-        byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
+        byte[] XR = concat(this.aggregatedPubKeys.getBytes(), this.aggR.getBytes());
         byte[] XRm = concat(XR, m);
         byte[] c = commitmentHash(XRm);
-        BigInteger intC = toUnsignedBigInteger(c);
-        System.out.println("signing with c: " + intC);
+        BigInteger intC = reduce(c);
 
-        BigInteger intA = toUnsignedBigInteger(this.ai);
-        System.out.println("signing with a: " + intA);
+//        System.out.println("signing with c: " + intC);
+
+        BigInteger intA = reduce(this.ai);
+//        System.out.println("signing with a: " + intA);
 
         BigInteger privateKey = this.privateKey.getKey();
         System.out.println("signing with private key: " + privateKey);
 
-        BigInteger s = rnonce.add(intC.multiply(intA).multiply(privateKey)).mod(Secp256k1.n);
+        BigInteger s = rnonce.add(intC.multiply(intA).multiply(privateKey));//.mod(Secp256k1.n);
 
         System.out.println("signature s: " + s.toString());
+        System.out.println("signature s: " + String.format("%064X", s));
+        System.out.println("signature s: " + String.format("%064X", s).length());
 
         System.out.println("================ Self-verify the signature after it has been created======================");
 
         Point caPublicKey = this.privateKey.getPublicKey().getPoint().scalarMultiply(intC).scalarMultiply(intA);
-//        System.out.println("caPublicKey: " + caPublicKey.toString());
-
         Point right = new PublicKey(this.rCommitment.getR()).getPoint().add(caPublicKey);
-
-        System.out.println(right);
         Point left = Secp256k1.G.scalarMultiply(s);
-        System.out.println(left);
 
         System.out.println("Self-verify: " + right.equals(left));
 
@@ -278,16 +269,16 @@ public class MuSig {
             /**
              * sP = R + caQ
              */
-            byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
+            byte[] XR = concat(this.aggregatedPubKeys.getBytes(), this.aggR.getBytes());
             byte[] XRm = concat(XR, m);
             byte[] c = commitmentHash(XRm);
-            BigInteger intC = toUnsignedBigInteger(c);
+            BigInteger intC = reduce(c);
             System.out.println("receiveSig c: " + intC);
 
 
             byte[] a = aggregatedKeyHash(this.multisetL, sign.getPublicKey());
 
-            BigInteger intA = toUnsignedBigInteger(a);
+            BigInteger intA = reduce(a);
 
             System.out.println("receiveSig a: " + intA);
 
@@ -314,7 +305,7 @@ public class MuSig {
     public MultiSignatures multisign() {
         System.out.println("signatures: " + sigs);
         Optional<BigInteger> optS = sigs.stream().reduce((x, y) -> x.add(y));
-        BigInteger s = optS.get().mod(Secp256k1.n);
+        BigInteger s = optS.get();//.mod(Secp256k1.n);
 
         MultiSignatures signatures = new MultiSignatures(this.aggR.getPoint(), s);
 
@@ -327,11 +318,41 @@ public class MuSig {
         // (with the public key included in the hash call)
         // with respect to the “aggregated” public key
         // R + [c]X~ = [s]P
-        byte[] XR = concat(this.aggregatedPubKeys.getPublicKey().getBytes(), this.aggR.getPublicKey().getBytes());
-        byte[] XRm = concat(XR, m);
+
+        if (this.m.length != 32) {
+            System.out.println("The message must be a 32-byte array.");
+            System.out.println(new String(this.m));
+            System.out.println(this.m.length);
+            return false;
+        }
+
+        /*if (this.aggregatedPubKeys.getBytes().length != 33 || this.aggR.getBytes().length != 33) {
+            System.out.println("The public key must be a 33-byte array.");
+            System.out.println(this.aggregatedPubKeys.getBytes().length);
+            System.out.println(this.aggR.getBytes().length);
+            return false;
+        }*/
+
+        if (this.publicKey.getBytes().length != 33) {
+            System.out.println("The public key must be a 33-byte array.");
+//            System.out.println(this.aggregatedPubKeys.getBytes().length);
+//            System.out.println(this.aggR.getBytes().length);
+            return false;
+        }
+
+        if (this.signatures.getS().toByteArray().length != 64) {
+            System.out.println("The signature must be a 64-byte array.");
+            return false;
+        }
+
+        PublicKey publicKey = new PublicKey(this.publicKey.getBytes());
+        publicKey.getPoint();
+
+        byte[] XR = concat(this.aggregatedPubKeys.getBytes(), this.aggR.getBytes());
+        byte[] XRm = concat(XR, this.m);
         byte[] c = commitmentHash(XRm);
 
-        BigInteger intC = toUnsignedBigInteger(c);
+        BigInteger intC = reduce(c);
         System.out.println("verify c: " + intC);
 
         Point left = this.aggR.getPoint().add(this.aggregatedPubKeys.getPoint().scalarMultiply(intC));

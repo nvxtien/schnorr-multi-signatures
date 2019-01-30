@@ -67,7 +67,7 @@ public class SchnorrSignatures {
         BigInteger e =  new BigInteger(h);
 
         BigInteger s = k.add(sk.getKey().multiply(e)).mod(Secp256k1.n);
-
+        System.out.println(s);
         Signature signature = new Signature(r, s);
 
         return signature;
