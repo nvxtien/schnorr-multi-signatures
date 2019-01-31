@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -61,5 +62,19 @@ public class VectorTest {
 
         System.out.println(m.length());
 
+
+        int[] a = {1,2,3,4,5,6,7,8,9};
+        int[] b = Arrays.copyOfRange(a, 0, 3);
+        System.out.println(b[0]);
+        System.out.println(b[1]);
+        System.out.println(b[2]);
+//        System.out.println(b[3]);
+
+        int[] c = Arrays.copyOfRange(a, 8, 9);
+//        System.out.println(c[0]);
+//        System.out.println(c[1]);
+//        System.out.println(c[2]);
+//        System.out.println(c[3]);
+        System.out.println(c[0]);
     }
 }

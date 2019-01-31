@@ -341,12 +341,34 @@ public class MuSig {
         }
 
         if (this.signatures.getS().toByteArray().length != 64) {
-            System.out.println("The signature must be a 64-byte array.");
+            System.out.println("The signature must be a 64-byte array. " + this.signatures.getS().toByteArray().length);
             return false;
         }
 
         PublicKey publicKey = new PublicKey(this.publicKey.getBytes());
         publicKey.getPoint();
+
+        byte[] s = this.signatures.getS().toByteArray();
+
+        byte[] r = Arrays.copyOfRange(s, 0, 32);
+        System.out.println("verify r: " + r.length);
+        System.out.println("verify r: " + new BigInteger(r).toString(16));
+
+        if (new BigInteger(r).compareTo(Secp256k1.p) >= 0) {
+            System.out.println("r must be less than p. ");
+            return false;
+        }
+
+        System.out.println("verify s: " + Arrays.toString(s));
+
+        byte[] ss = Arrays.copyOfRange(s, 32, 64);
+        System.out.println("verify ss: " + ss.length);
+        System.out.println("verify ss: " + new BigInteger(ss).toString(16));
+
+        System.out.println("verify ss: " + Arrays.toString(ss));
+
+        System.out.println(BaseEncoding.base16().encode(ss));
+        System.out.println(new BigInteger(BaseEncoding.base16().encode(ss), 16));
 
         byte[] XR = concat(this.aggregatedPubKeys.getBytes(), this.aggR.getBytes());
         byte[] XRm = concat(XR, this.m);
