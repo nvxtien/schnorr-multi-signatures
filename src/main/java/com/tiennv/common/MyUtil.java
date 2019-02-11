@@ -1,5 +1,7 @@
 package com.tiennv.common;
 
+import com.google.common.io.BaseEncoding;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -124,4 +126,7 @@ public final class MyUtil {
         return BigInteger.ZERO;
     }
 
+    public static String toHex(byte[] input) {
+        return BaseEncoding.base16().encode(input);
+    }
 }

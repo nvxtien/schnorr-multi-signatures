@@ -1,21 +1,20 @@
 package com.tiennv.ec;
 
-import java.math.BigInteger;
-
 public class Signature {
-    private final Point r;
-    private final BigInteger s;
 
-    public Signature(Point r, BigInteger s) {
+    private final byte[] r;
+    private final byte[] s;
+
+    public Signature(byte[] r, byte[] s) {
         this.r = r;
         this.s = s;
     }
 
-    public Point getR() {
+    public byte[] getR() {
         return r;
     }
 
-    public BigInteger getS() {
+    public byte[] getS() {
         return s;
     }
 

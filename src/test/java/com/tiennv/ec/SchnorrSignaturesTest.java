@@ -13,11 +13,15 @@ public class SchnorrSignaturesTest {
 
         BigInteger key = new BigInteger("0000000000000000000000000000000000000000000000000000000000000001", 16);
         PrivateKey privateKey = new PrivateKey(key);
+        Point pk = privateKey.getPublicKey().getPoint();
+        System.out.println("pk: " + pk.toString());
 
 //        PrivateKey privateKey = signatures.generateKeyPair();
 
         Signature sig = signatures.sign(privateKey, "hello".getBytes());
+
         boolean expected = signatures.verify(privateKey.getPublicKey().getPoint(), sig, "hello".getBytes());
+
         assertTrue(expected);
     }
 }

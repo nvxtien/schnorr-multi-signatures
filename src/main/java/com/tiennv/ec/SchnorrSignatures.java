@@ -1,5 +1,7 @@
 package com.tiennv.ec;
 
+import com.tiennv.common.MyUtil;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,31 +52,81 @@ public class SchnorrSignatures {
 
     public Signature sign(PrivateKey sk, byte[] m) {
 
-        SecureRandom random = new SecureRandom();
-        BigInteger k = new BigInteger(256, random);
-        Point r = Secp256k1.G.scalarMultiply(k);
+        BigInteger k = BigInteger.ZERO;
+        BigInteger r = BigInteger.ZERO;
+        BigInteger s = BigInteger.ZERO;
+        while(s.equals(BigInteger.ZERO)) {
+            while (r.equals(BigInteger.ZERO)) {
+                // k <- [1, n − 1]
+                while (k.equals(BigInteger.ZERO)) {
+                    SecureRandom random = new SecureRandom();
+                    k = new BigInteger(256, random).mod(Secp256k1.n);
+                }
+                Point q = Secp256k1.G.scalarMultiply(k);
 
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+                MessageDigest digest = null;
+                try {
+                    digest = MessageDigest.getInstance("SHA-256");
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                }
+
+//                System.out.println("Q: " + q.toString());
+                System.out.println("Q: " + MyUtil.toHex(q.toBytes()));
+                System.out.println("pk: " + MyUtil.toHex(sk.getPublicKey().getBytes()));
+                System.out.println("m: " + MyUtil.toHex(m));
+                byte[] in = MyUtil.concat(q.toBytes(), sk.getPublicKey().getBytes());
+                in = MyUtil.concat(in, m);
+                in = digest.digest(in);
+
+                // r ← H(Q||pk||m) mod n
+                r = new BigInteger(in).mod(Secp256k1.n);
+                System.out.println("r: " + r);
+            }
+            // s ← k − r · sk mod n
+            s = k.subtract(r.multiply(sk.getKey())).mod(Secp256k1.n);
+            System.out.println("s: " + s);
         }
 
-        BigInteger input = new BigInteger(m);
-        BigInteger rencode = new BigInteger(r.toString().getBytes());
-        byte[] h = digest.digest(input.or(rencode).toByteArray());
-        BigInteger e =  new BigInteger(h);
-
-        BigInteger s = k.add(sk.getKey().multiply(e)).mod(Secp256k1.n);
-        System.out.println(s);
-        Signature signature = new Signature(r, s);
+        Signature signature = new Signature(r.toByteArray(), s.toByteArray());
 
         return signature;
     }
 
 
-    public boolean verify(Point q, Signature signature, byte[] m) {
+    public boolean verify(Point pk, Signature signature, byte[] m) {
+
+        // If r, s /∈ [1, n − 1] return 0
+        BigInteger r = new BigInteger(signature.getR());
+//        System.out.println("r: " + r);
+
+        if (r.compareTo(BigInteger.ONE) == -1 || r.compareTo(Secp256k1.n) > -1) {
+            return false;
+        }
+
+        BigInteger s = new BigInteger(signature.getS());
+//        System.out.println("s: " + s);
+        if (s.compareTo(BigInteger.ONE) == -1 || s.compareTo(Secp256k1.n) > -1) {
+            return false;
+        }
+
+        // Q ← [s]G + [r]pk
+        Point q = Secp256k1.G.scalarMultiply(s).add(pk.scalarMultiply(r));
+        if (q.isInfinity()) {
+            return false;
+        }
+//        System.out.println("Q: " + q.toString());
+
+        // v ← H(Q||pk||m) mod n
+//        System.out.println("pk: " + pk.toString());
+
+        System.out.println("Q: " + MyUtil.toHex(q.toBytes()));
+        System.out.println("pk: " + MyUtil.toHex(pk.toBytes()));
+        System.out.println("m: " + MyUtil.toHex(m));
+
+        byte[] out = MyUtil.concat(q.toBytes(), pk.toBytes());
+        out = MyUtil.concat(out, m);
+
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -82,16 +134,24 @@ public class SchnorrSignatures {
             e.printStackTrace();
         }
 
-        BigInteger input = new BigInteger(m);
-        BigInteger rencode = new BigInteger(signature.getR().toString().getBytes());
+        out = digest.digest(out);
 
-        byte[] h = digest.digest(input.or(rencode).toByteArray());
-        BigInteger e =  new BigInteger(h);
+        BigInteger v = new BigInteger(out).mod(Secp256k1.n);
+        System.out.println("v: " + v);
 
-        Point req = signature.getR().add(q.scalarMultiply(e));
-        Point sP = Secp256k1.G.scalarMultiply(signature.getS());
+        return v.equals(r);
 
-        return  req.equals(sP);
+//        BigInteger input = new BigInteger(m);
+//        BigInteger rencode = new BigInteger(signature.getR().toString().getBytes());
+//
+//        byte[] h = digest.digest(input.or(rencode).toByteArray());
+//        BigInteger e =  new BigInteger(h);
+//
+//        Point req = signature.getR().add(q.scalarMultiply(e));
+//
+//        Point sP = Secp256k1.G.scalarMultiply(signature.getS());
+//
+//        return  req.equals(sP);
     }
 
     public void create() {

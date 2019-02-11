@@ -75,7 +75,11 @@ public class MuSig {
     }
 
     private BigInteger reduce(byte[] a) {
-        return new BigInteger(a).mod(Secp256k1.n);
+        BigInteger r = new BigInteger(a);
+        /*if (r.signum() == -1) {
+            r = r.add(Secp256k1.n);
+        }*/
+        return r.mod(Secp256k1.n);
     }
 
     /**
@@ -131,7 +135,7 @@ public class MuSig {
 
     private TCommitment computeTComm() {
         SecureRandom random = new SecureRandom();
-        rnonce = new BigInteger(256, random);
+        this.rnonce = new BigInteger(256, random).mod(Secp256k1.n);
 
         Point pR = Secp256k1.G.scalarMultiply(rnonce);
 
@@ -216,12 +220,18 @@ public class MuSig {
 //        Optional<Point> optR = this.rCommitments.stream().map(RCommitment::getR).reduce((x, y) -> x.add(y));
 //        Point aggR = optR.get();
 
-        this.m = BaseEncoding.base16().decode(msg);
+        String m1 = BaseEncoding.base16().encode(msg.getBytes());
+        System.out.println("m1 " + m1);
+
+        this.m = BaseEncoding.base16().decode(m1);
+        System.out.println("this.m " + this.m);
+
+
         System.out.println("signing with m: " + new BigInteger(this.m));
         System.out.println("signing with m: " + this.m.length);
 
         byte[] XR = concat(this.aggregatedPubKeys.getBytes(), this.aggR.getBytes());
-        byte[] XRm = concat(XR, m);
+        byte[] XRm = concat(XR, this.m);
         byte[] c = commitmentHash(XRm);
         BigInteger intC = reduce(c);
 
@@ -233,11 +243,20 @@ public class MuSig {
         BigInteger privateKey = this.privateKey.getKey();
         System.out.println("signing with private key: " + privateKey);
 
-        BigInteger s = rnonce.add(intC.multiply(intA).multiply(privateKey));//.mod(Secp256k1.n);
+        // s1 = r1 + c * a1 * x1 mod n
+        BigInteger s = rnonce.add(intC.multiply(intA).multiply(privateKey)).mod(Secp256k1.n);
 
         System.out.println("signature s: " + s.toString());
+        System.out.println("signature s: " + s.toString(16).length());
+
+        String s64 = String.format("%064X", s);
+
         System.out.println("signature s: " + String.format("%064X", s));
-        System.out.println("signature s: " + String.format("%064X", s).length());
+//        System.out.println("signature s: " + String.format("%064X", s).length());
+//        System.out.println("signature s: " + s.signum());
+        System.out.println("signature s: " + s.toByteArray().length);
+
+//        System.out.println("signature s: " + s64.toByteArray().length);
 
         System.out.println("================ Self-verify the signature after it has been created======================");
 
@@ -273,8 +292,8 @@ public class MuSig {
             byte[] XRm = concat(XR, m);
             byte[] c = commitmentHash(XRm);
             BigInteger intC = reduce(c);
-            System.out.println("receiveSig c: " + intC);
 
+            System.out.println("receiveSig c: " + intC);
 
             byte[] a = aggregatedKeyHash(this.multisetL, sign.getPublicKey());
 
@@ -319,7 +338,7 @@ public class MuSig {
         // with respect to the “aggregated” public key
         // R + [c]X~ = [s]P
 
-        if (this.m.length != 32) {
+        if (this.m.length > 32) {
             System.out.println("The message must be a 32-byte array.");
             System.out.println(new String(this.m));
             System.out.println(this.m.length);
@@ -340,10 +359,10 @@ public class MuSig {
             return false;
         }
 
-        if (this.signatures.getS().toByteArray().length != 64) {
+        /*if (this.signatures.getS().toByteArray().length != 64) {
             System.out.println("The signature must be a 64-byte array. " + this.signatures.getS().toByteArray().length);
             return false;
-        }
+        }*/
 
         PublicKey publicKey = new PublicKey(this.publicKey.getBytes());
         publicKey.getPoint();

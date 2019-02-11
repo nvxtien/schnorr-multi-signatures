@@ -51,6 +51,7 @@ public class VectorTest {
 
         // a 64-char string
         String m = "0000000000000000000000000000000000000000000000000000000000000000";
+
         cosigner.sign(m);
 
         Signing signing = cosigner.sendSig();

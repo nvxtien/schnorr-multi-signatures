@@ -1,5 +1,8 @@
 package com.tiennv.ec;
 
+import com.google.common.io.BaseEncoding;
+import com.tiennv.common.MyUtil;
+
 import java.math.BigInteger;
 import java.util.Objects;
 
@@ -96,6 +99,14 @@ public final class Point {
 
     public boolean isInfinity() {
         return this.affineX == null && this.affineY == null;
+    }
+
+    public byte[] toBytes() {
+        BigInteger prefix = BigInteger.valueOf(2).add(this.getAffineY().and(BigInteger.ONE));
+        // a 32-byte hex number
+        String hex = String.format("%064X", this.getAffineX());
+        byte[] xCoor = BaseEncoding.base16().decode(hex);
+        return MyUtil.concat(prefix.toByteArray(), xCoor);
     }
 
     public void print() {
